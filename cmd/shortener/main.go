@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"net/http"
+
+	"github.com/HungryArthur/go-shortener/internal/handler"
+)
 
 func main() {
-	fmt.Println("hello go")
+	http.HandleFunc("/", handler.ShortPost)
+
+	http.ListenAndServe(":8080", nil)
+
 }

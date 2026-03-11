@@ -10,22 +10,22 @@ import (
 	"github.com/HungryArthur/go-shortener/internal/service"
 )
 
-type UrlService interface {
+type URLService interface {
 	Save(url string) (string, error)
 	Get(string) (string, error)
 }
 
-type UrlHandler struct {
-	service UrlService
+type URLHandler struct {
+	service URLService
 }
 
-func NewUrlHandler(service UrlService) *UrlHandler {
-	return &UrlHandler{
+func NewURLHandler(service URLService) *URLHandler {
+	return &URLHandler{
 		service: service,
 	}
 }
 
-func (h *UrlHandler) Handle(w http.ResponseWriter, r *http.Request) {
+func (h *URLHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		h.Get(w, r)
@@ -36,23 +36,23 @@ func (h *UrlHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *UrlHandler) Get(w http.ResponseWriter, r *http.Request) {
-	shortenedUrl, _ := strings.CutPrefix(r.URL.Path, "/")
-	srcUrl, err := h.service.Get(shortenedUrl)
+func (h *URLHandler) Get(w http.ResponseWriter, r *http.Request) {
+	shortenedURL, _ := strings.CutPrefix(r.URL.Path, "/")
+	srcURL, err := h.service.Get(shortenedURL)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrShortenedUrlDoesntExist):
+		case errors.Is(err, service.ErrShortenedURLDoesntExist):
 			http.NotFound(w, r)
-		case errors.Is(err, service.ErrCantGetUrl):
+		case errors.Is(err, service.ErrCantGetURL):
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
 	}
-	w.Header().Set("Location", srcUrl)
+	w.Header().Set("Location", srcURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h *UrlHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST request allowed", http.StatusMethodNotAllowed)
 		return
@@ -67,7 +67,7 @@ func (h *UrlHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	urlIn := string(body)
 
-	shortenedUrl, err := h.service.Save(urlIn)
+	shortenedURL, err := h.service.Save(urlIn)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -76,5 +76,5 @@ func (h *UrlHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shortenedUrl))
+	w.Write([]byte("http://localhost:8080/" + shortenedURL))
 }

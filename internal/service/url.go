@@ -19,34 +19,34 @@ func genRandomString(length int) string {
 	return string(str)
 }
 
-type UrlRepository interface {
-	Save(sourceUrl string, shortenedUrl string) error
-	Get(shortenedUrl string) (string, error)
+type URLRepository interface {
+	Save(sourceURL string, shortenedURL string) error
+	Get(shortenedURL string) (string, error)
 }
 
-type UrlService struct {
-	repo UrlRepository
+type URLService struct {
+	repo URLRepository
 }
 
-func NewUrlService(repo UrlRepository) *UrlService {
-	return &UrlService{
+func NewURLService(repo URLRepository) *URLService {
+	return &URLService{
 		repo: repo,
 	}
 }
 
-func (s *UrlService) Save(sourceUrl string) (string, error) {
-	if !strings.HasPrefix(sourceUrl, "http://") && !strings.HasPrefix(sourceUrl, "https://") {
+func (s *URLService) Save(sourceURL string) (string, error) {
+	if !strings.HasPrefix(sourceURL, "http://") && !strings.HasPrefix(sourceURL, "https://") {
 		return "", fmt.Errorf("not a link")
 	}
 
 	newPath := genRandomString(5)
 
-	err := s.repo.Save(sourceUrl, newPath)
+	err := s.repo.Save(sourceURL, newPath)
 
 	if err != nil {
-		if errors.Is(err, repository.ErrShortenedUrlAlreadyExists) {
+		if errors.Is(err, repository.ErrShortenedURLAlreadyExists) {
 			fmt.Println("recursive")
-			return s.Save(sourceUrl)
+			return s.Save(sourceURL)
 		}
 		return "", fmt.Errorf("can't save new url to storage: %w", err)
 	}
@@ -54,15 +54,15 @@ func (s *UrlService) Save(sourceUrl string) (string, error) {
 	return newPath, nil
 }
 
-func (s *UrlService) Get(shortenedUrl string) (string, error) {
-	sourceUrl, err := s.repo.Get(shortenedUrl)
+func (s *URLService) Get(shortenedURL string) (string, error) {
+	sourceURL, err := s.repo.Get(shortenedURL)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrShortenedUrlDoesntExist):
-			return "", ErrShortenedUrlDoesntExist
+		case errors.Is(err, repository.ErrShortenedURLDoesntExist):
+			return "", ErrShortenedURLDoesntExist
 		default:
-			return "", fmt.Errorf("unhandled error from repository: %w, %w", err, ErrCantGetUrl)
+			return "", fmt.Errorf("unhandled error from repository: %w, %w", err, ErrCantGetURL)
 		}
 	}
-	return sourceUrl, nil
+	return sourceURL, nil
 }

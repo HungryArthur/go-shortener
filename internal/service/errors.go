@@ -3,6 +3,6 @@ package service
 import "errors"
 
 var (
-	ErrShortenedUrlDoesntExist = errors.New("shortened url doesn't exist")
-	ErrCantGetUrl              = errors.New("can't get url")
+	ErrShortenedURLDoesntExist = errors.New("shortened url doesn't exist")
+	ErrCantGetURL              = errors.New("can't get url")
 )

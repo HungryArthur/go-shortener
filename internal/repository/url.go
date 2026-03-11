@@ -4,36 +4,36 @@ import (
 	"errors"
 )
 
-type UrlRepository struct {
+type URLRepository struct {
 	// сокращенный url -> куда ведет сокращенный url
 	st map[string]string
 }
 
-func NewUrlRepository() *UrlRepository {
-	return &UrlRepository{
+func NewURLRepository() *URLRepository {
+	return &URLRepository{
 		st: make(map[string]string),
 	}
 }
 
 var (
-	ErrShortenedUrlAlreadyExists = errors.New("shortened url already exists")
-	ErrShortenedUrlDoesntExist   = errors.New("shortened url doesn't exist")
+	ErrShortenedURLAlreadyExists = errors.New("shortened url already exists")
+	ErrShortenedURLDoesntExist   = errors.New("shortened url doesn't exist")
 )
 
-func (r *UrlRepository) Save(sourceUrl, shortened string) error {
+func (r *URLRepository) Save(sourceURL, shortened string) error {
 	_, ok := r.st[shortened]
 	if ok {
-		return ErrShortenedUrlAlreadyExists
+		return ErrShortenedURLAlreadyExists
 	}
 
-	r.st[shortened] = sourceUrl
+	r.st[shortened] = sourceURL
 	return nil
 }
 
-func (r *UrlRepository) Get(shortenedUrl string) (string, error) {
-	srcUrl, ok := r.st[shortenedUrl]
+func (r *URLRepository) Get(shortenedURL string) (string, error) {
+	srcURL, ok := r.st[shortenedURL]
 	if !ok {
-		return "", ErrShortenedUrlDoesntExist
+		return "", ErrShortenedURLDoesntExist
 	}
-	return srcUrl, nil
+	return srcURL, nil
 }

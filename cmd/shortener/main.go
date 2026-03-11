@@ -10,9 +10,9 @@ import (
 )
 
 func main() {
-	repo := repository.NewUrlRepository()
-	service := service.NewUrlService(repo)
-	handler := handler.NewUrlHandler(service)
+	repo := repository.NewURLRepository()
+	service := service.NewURLService(repo)
+	handler := handler.NewURLHandler(service)
 
 	http.HandleFunc("/", handler.Handle)
 

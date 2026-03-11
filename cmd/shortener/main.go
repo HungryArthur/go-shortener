@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/HungryArthur/go-shortener/internal/handler"
@@ -15,5 +16,8 @@ func main() {
 
 	http.HandleFunc("/", handler.Handle)
 
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil && err != http.ErrServerClosed {
+		fmt.Println("can't start server", err)
+	}
 }

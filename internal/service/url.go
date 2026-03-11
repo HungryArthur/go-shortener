@@ -35,7 +35,7 @@ func NewUrlService(repo UrlRepository) *UrlService {
 }
 
 func (s *UrlService) Save(sourceUrl string) (string, error) {
-	if !(strings.HasPrefix(sourceUrl, "http://") || strings.HasPrefix(sourceUrl, "https://")) {
+	if !strings.HasPrefix(sourceUrl, "http://") && !strings.HasPrefix(sourceUrl, "https://") {
 		return "", fmt.Errorf("not a link")
 	}
 

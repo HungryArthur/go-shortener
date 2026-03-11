@@ -21,6 +21,7 @@ func genRandomString(length int) string {
 
 type UrlRepository interface {
 	Save(sourceUrl string, shortenedUrl string) error
+	Get(shortenedUrl string) (string, error)
 }
 
 type UrlService struct {
@@ -51,4 +52,17 @@ func (s *UrlService) Save(sourceUrl string) (string, error) {
 	}
 
 	return newPath, nil
+}
+
+func (s *UrlService) Get(shortenedUrl string) (string, error) {
+	sourceUrl, err := s.repo.Get(shortenedUrl)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrShortenedUrlDoesntExist):
+			return "", ErrShortenedUrlDoesntExist
+		default:
+			return "", fmt.Errorf("unhandled error from repository: %w, %w", err, ErrCantGetUrl)
+		}
+	}
+	return sourceUrl, nil
 }

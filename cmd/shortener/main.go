@@ -13,7 +13,7 @@ func main() {
 	service := service.NewUrlService(repo)
 	handler := handler.NewUrlHandler(service)
 
-	http.HandleFunc("/", handler.Create)
+	http.HandleFunc("/", handler.Handle)
 
 	http.ListenAndServe(":8080", nil)
 }

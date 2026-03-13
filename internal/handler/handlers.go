@@ -4,9 +4,9 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/HungryArthur/go-shortener/internal/service"
+	"github.com/go-chi/chi/v5"
 )
 
 type URLService interface {
@@ -24,19 +24,8 @@ func NewURLHandler(service URLService) *URLHandler {
 	}
 }
 
-func (h *URLHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		h.Get(w, r)
-	case http.MethodPost:
-		h.Create(w, r)
-	default:
-		http.NotFound(w, r)
-	}
-}
-
 func (h *URLHandler) Get(w http.ResponseWriter, r *http.Request) {
-	shortenedURL, _ := strings.CutPrefix(r.URL.Path, "/")
+	shortenedURL := chi.URLParam(r, "shortenedPath")
 	srcURL, err := h.service.Get(shortenedURL)
 	if err != nil {
 		switch {

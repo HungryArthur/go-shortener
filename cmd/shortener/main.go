@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/HungryArthur/go-shortener/internal/config"
 	"github.com/HungryArthur/go-shortener/internal/handler"
 	"github.com/HungryArthur/go-shortener/internal/repository"
 	"github.com/HungryArthur/go-shortener/internal/service"
@@ -16,6 +17,8 @@ import (
 )
 
 func main() {
+	config.Load()
+	
 	repo := repository.NewURLRepository()
 	service := service.NewURLService(repo)
 	handler := handler.NewURLHandler(service)
@@ -25,7 +28,7 @@ func main() {
 	router.Get("/{shortenedURL}", handler.Get)
 	router.Post("/", handler.Create)
 
-	srv := http.Server{Addr: ":8080", Handler: router}
+	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
 
 	go func() {
 		err := srv.ListenAndServe()

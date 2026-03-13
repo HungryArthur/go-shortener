@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/HungryArthur/go-shortener/internal/config"
 	"github.com/HungryArthur/go-shortener/internal/repository"
 )
 
@@ -38,11 +39,10 @@ func (s *URLService) Save(sourceURL string) (string, error) {
 	if !strings.HasPrefix(sourceURL, "http://") && !strings.HasPrefix(sourceURL, "https://") {
 		return "", fmt.Errorf("not a link")
 	}
+	
+	shortCode := genRandomString(5)
 
-	newPath := genRandomString(5)
-
-	err := s.repo.Save(sourceURL, newPath)
-
+	err := s.repo.Save(sourceURL, shortCode)
 	if err != nil {
 		if errors.Is(err, repository.ErrShortenedURLAlreadyExists) {
 			fmt.Println("recursive")
@@ -50,8 +50,14 @@ func (s *URLService) Save(sourceURL string) (string, error) {
 		}
 		return "", fmt.Errorf("can't save new url to storage: %w", err)
 	}
-
-	return newPath, nil
+	
+	baseURL := config.FlagBaseShortenedURLAddr
+	if baseURL == "" {
+		return "http://localhost" + config.FlagRunAddr + "/" + shortCode, nil
+	}
+	
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	return fmt.Sprintf("%s/%s", baseURL, shortCode), nil
 }
 
 func (s *URLService) Get(shortenedURL string) (string, error) {

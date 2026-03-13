@@ -25,7 +25,7 @@ func NewURLHandler(service URLService) *URLHandler {
 }
 
 func (h *URLHandler) Get(w http.ResponseWriter, r *http.Request) {
-	shortenedURL := chi.URLParam(r, "shortenedPath")
+	shortenedURL := chi.URLParam(r, "shortenedURL")
 	srcURL, err := h.service.Get(shortenedURL)
 	if err != nil {
 		switch {

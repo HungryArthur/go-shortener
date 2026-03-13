@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"github.com/HungryArthur/go-shortener/internal/handler"
 	mock_handler "github.com/HungryArthur/go-shortener/internal/mocks"
 	"github.com/HungryArthur/go-shortener/internal/service"
+	"github.com/go-chi/chi/v5"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -147,7 +149,12 @@ func TestURLHandler_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := chi.NewRouteContext()
+			ctx.URLParams.Add("shortenedURL", strings.TrimPrefix(tt.urlPath, "/"))
+
 			r := httptest.NewRequest(http.MethodGet, tt.urlPath, nil)
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, ctx))
+
 			w := httptest.NewRecorder()
 
 			h := handler.NewURLHandler(tt.service(t))

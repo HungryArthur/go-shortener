@@ -22,7 +22,7 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Get("/{shortenedPath}", handler.Get)
+	router.Get("/{shortenedURL}", handler.Get)
 	router.Post("/", handler.Create)
 
 	srv := http.Server{Addr: ":8080", Handler: router}

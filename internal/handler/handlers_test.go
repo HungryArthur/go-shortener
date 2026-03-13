@@ -115,3 +115,56 @@ func TestURLHandler_Create(t *testing.T) {
 }
 
 
+
+func TestURLHandler_Get(t *testing.T) {
+    type want struct {
+        code        int
+        response    string
+        contentType string
+		location string
+    }
+	
+	tests := []struct {
+		name string
+		urlPath string
+		want want
+		service func(test *testing.T) handler.URLService
+	}{
+		{
+			name: "success get",
+			service: func(test *testing.T) handler.URLService {
+				controller := gomock.NewController(test)
+				mock := mock_handler.NewMockURLService(controller)
+				mock.EXPECT().Get("random").Return("https://www.perplexity.ai/", nil).Times(1)
+				return mock
+			},
+			want: want{
+				code: 307,
+				response: "",
+				contentType: "",
+				location: "https://www.perplexity.ai/",
+			},
+			urlPath: "/random",
+
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, tt.urlPath, nil)
+			w := httptest.NewRecorder()
+			
+			h := handler.NewURLHandler(tt.service(t))
+			h.Get(w, r)
+			
+			res := w.Result()
+			defer res.Body.Close()
+			
+			rBody, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			
+			require.Equal(t, tt.want.code, res.StatusCode)
+			require.Equal(t, tt.want.response, string(rBody))
+			require.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
+		})
+	}
+}

@@ -64,5 +64,5 @@ func (h *URLHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shortenedURL))
+	w.Write([]byte(shortenedURL))
 }

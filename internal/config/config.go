@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"strings"
 )
 
 var FlagRunAddr string
@@ -15,4 +16,7 @@ func Load() {
 	flag.StringVar(&FlagBaseShortenedURLAddr, "b", "", "base address of the resulting shortened URL")
 	
 	flag.Parse()
+	
+	// FlagBaseShortenedURLAddr = strings.TrimPrefix(FlagBaseShortenedURLAddr, "http://localhost" + FlagRunAddr)
+	FlagBaseShortenedURLAddr = strings.TrimSuffix(FlagBaseShortenedURLAddr, "/")
 }

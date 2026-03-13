@@ -38,7 +38,7 @@ func TestURLHandler_Create(t *testing.T) {
 			service: func(test *testing.T) handler.URLService {
 				controller := gomock.NewController(test)
 				mock := mock_handler.NewMockURLService(controller)
-				mock.EXPECT().Save("https://www.perplexity.ai/").Return("random", nil).Times(1)
+				mock.EXPECT().Save("https://www.perplexity.ai/").Return("http://localhost:8080/random", nil).Times(1)
 				return mock
 			},
 			want: want{

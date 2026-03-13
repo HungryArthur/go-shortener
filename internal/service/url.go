@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/HungryArthur/go-shortener/internal/config"
 	"github.com/HungryArthur/go-shortener/internal/repository"
 )
 
@@ -39,7 +40,7 @@ func (s *URLService) Save(sourceURL string) (string, error) {
 		return "", fmt.Errorf("not a link")
 	}
 
-	newPath := genRandomString(5)
+	newPath := config.FlagBaseShortenedURLAddr + genRandomString(5)
 
 	err := s.repo.Save(sourceURL, newPath)
 

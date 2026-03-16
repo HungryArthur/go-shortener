@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/HungryArthur/go-shortener/internal/config"
-	"github.com/HungryArthur/go-shortener/internal/handler"
+	url_handler "github.com/HungryArthur/go-shortener/internal/handlers/url"
 	"github.com/HungryArthur/go-shortener/internal/repository"
 	"github.com/HungryArthur/go-shortener/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -18,15 +18,17 @@ import (
 
 func main() {
 	config.Load()
-	
+
 	repo := repository.NewURLRepository()
 	service := service.NewURLService(repo)
-	handler := handler.NewURLHandler(service)
+	handler := url_handler.NewURLHandler(service)
 
 	router := chi.NewRouter()
 
-	router.Get("/{shortenedURL}", handler.Get)
-	router.Post("/", handler.Create)
+	router.Get("/{shortenedURL}", handler.GetTextPlain)
+	router.Post("/", handler.CreateTextPlain)
+
+	router.Post("/api/shorten", handler.GetJson)
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
 

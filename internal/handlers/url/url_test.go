@@ -1,4 +1,4 @@
-package handler_test
+package url
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/HungryArthur/go-shortener/internal/handler"
 	mock_handler "github.com/HungryArthur/go-shortener/internal/mocks"
 	"github.com/HungryArthur/go-shortener/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestURLHandler_Create(t *testing.T) {
+func TestURLHandler_CreateTextPlain(t *testing.T) {
 	type want struct {
 		code        int
 		response    string
@@ -30,12 +29,12 @@ func TestURLHandler_Create(t *testing.T) {
 		want         want
 		shortenedURL string
 		sourceURL    string
-		service      func(test *testing.T) handler.URLService
+		service      func(test *testing.T) URLService
 	}{
 		// норм тест
 		{
 			name: "success",
-			service: func(test *testing.T) handler.URLService {
+			service: func(test *testing.T) URLService {
 				controller := gomock.NewController(test)
 				mock := mock_handler.NewMockURLService(controller)
 				mock.EXPECT().Save("https://www.perplexity.ai/").Return("http://localhost:8080/random", nil).Times(1)
@@ -52,7 +51,7 @@ func TestURLHandler_Create(t *testing.T) {
 		// не норм тест
 		{
 			name: "not success",
-			service: func(test *testing.T) handler.URLService {
+			service: func(test *testing.T) URLService {
 				controller := gomock.NewController(test)
 				mock := mock_handler.NewMockURLService(controller)
 				mock.EXPECT().Save("lol").Return("", service.ErrShortenedURLDoesntExist).Times(1)
@@ -69,7 +68,7 @@ func TestURLHandler_Create(t *testing.T) {
 		// длинная ссылка тест
 		{
 			name: "long URL",
-			service: func(test *testing.T) handler.URLService {
+			service: func(test *testing.T) URLService {
 				controller := gomock.NewController(test)
 				mock := mock_handler.NewMockURLService(controller)
 				return mock
@@ -100,8 +99,8 @@ func TestURLHandler_Create(t *testing.T) {
 
 			request := httptest.NewRequest(http.MethodPost, "/", body)
 
-			h := handler.NewURLHandler(tt.service(t))
-			h.Create(w, request)
+			h := NewURLHandler(tt.service(t))
+			h.CreateTextPlain(w, request)
 
 			res := w.Result()
 			defer res.Body.Close()
@@ -116,7 +115,7 @@ func TestURLHandler_Create(t *testing.T) {
 	}
 }
 
-func TestURLHandler_Get(t *testing.T) {
+func TestURLHandler_GetTextPlain(t *testing.T) {
 	type want struct {
 		code        int
 		response    string
@@ -128,11 +127,11 @@ func TestURLHandler_Get(t *testing.T) {
 		name    string
 		urlPath string
 		want    want
-		service func(test *testing.T) handler.URLService
+		service func(test *testing.T) URLService
 	}{
 		{
 			name: "success get",
-			service: func(test *testing.T) handler.URLService {
+			service: func(test *testing.T) URLService {
 				controller := gomock.NewController(test)
 				mock := mock_handler.NewMockURLService(controller)
 				mock.EXPECT().Get("random").Return("https://www.perplexity.ai/", nil).Times(1)
@@ -157,8 +156,8 @@ func TestURLHandler_Get(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			h := handler.NewURLHandler(tt.service(t))
-			h.Get(w, r)
+			h := NewURLHandler(tt.service(t))
+			h.GetTextPlain(w, r)
 
 			res := w.Result()
 			defer res.Body.Close()

@@ -29,21 +29,21 @@ func (rw *loggingResponseWriter) Write(b []byte) (int, error) {
 
 func WriteHeader(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
-		logFn := func (w http.ResponseWriter, r *http.Request) {
+		logFn := func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			
-			responseData := &responseData {
+
+			responseData := &responseData{
 				code: 0,
 				size: 0,
 			}
-			lw := loggingResponseWriter {
+			lw := loggingResponseWriter{
 				ResponseWriter: w,
-				responseData: responseData,
+				responseData:   responseData,
 			}
 			h.ServeHTTP(&lw, r)
-			
+
 			duration := time.Since(start)
-			
+
 			logger.Info("HTTP request",
 				zap.String("uri", r.RequestURI),
 				zap.String("method", r.Method),

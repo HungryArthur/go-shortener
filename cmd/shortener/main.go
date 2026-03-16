@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/HungryArthur/go-shortener/internal/config"
-	"github.com/HungryArthur/go-shortener/internal/handler"
+	url_handler "github.com/HungryArthur/go-shortener/internal/handlers/url"
 	"github.com/HungryArthur/go-shortener/internal/middlewares"
 	"github.com/HungryArthur/go-shortener/internal/repository"
 	"github.com/HungryArthur/go-shortener/internal/service"
@@ -18,30 +18,32 @@ import (
 )
 
 func main() {
+	config.Load()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
 	}
 	defer logger.Sync()
-	
+
 	sugar := logger.Sugar()
-	
-	config.Load()
+
 	sugar.Infow("config load", "run address", config.FlagRunAddr)
 
 	repo := repository.NewURLRepository()
 	service := service.NewURLService(repo)
-	handler := handler.NewURLHandler(service)
+	handler := url_handler.NewURLHandler(service)
 
 	router := chi.NewRouter()
-	
+
 	router.Use(middlewares.WriteHeader(logger))
 
-	router.Get("/{shortenedURL}", handler.Get)
-	router.Post("/", handler.Create)
+	router.Get("/{shortenedURL}", handler.GetTextPlain)
+	router.Post("/", handler.CreateTextPlain)
+
+	router.Post("/api/shorten", handler.CreateJSON)
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
-	
+
 	sugar.Infow("starting server", "address", config.FlagRunAddr)
 
 	go func() {

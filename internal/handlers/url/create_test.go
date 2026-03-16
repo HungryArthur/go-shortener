@@ -1,9 +1,10 @@
 package url
 
 import (
-	"context"
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,21 +13,24 @@ import (
 
 	mock_handler "github.com/HungryArthur/go-shortener/internal/mocks"
 	"github.com/HungryArthur/go-shortener/internal/service"
-	"github.com/go-chi/chi/v5"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestURLHandler_CreateTextPlain(t *testing.T) {
+func TestURLHandler_Create(t *testing.T) {
 	type want struct {
-		code        int
-		response    string
-		contentType string
+		code                  int
+		plainTextResponseBody string
+		jsonResponseBody      string
+
+		contentType *string
 	}
 
 	tests := []struct {
-		name         string
-		want         want
+		name string
+
+		want want
+
 		shortenedURL string
 		sourceURL    string
 		service      func(test *testing.T) URLService
@@ -41,9 +45,14 @@ func TestURLHandler_CreateTextPlain(t *testing.T) {
 				return mock
 			},
 			want: want{
-				code:        201,
-				response:    "http://localhost:8080/random",
-				contentType: "text/plain",
+				code:                  201,
+				plainTextResponseBody: "http://localhost:8080/random",
+				jsonResponseBody: `
+				{
+					"result": "http://localhost:8080/random"
+				}
+				`,
+				contentType: nil,
 			},
 			shortenedURL: "random",
 			sourceURL:    "https://www.perplexity.ai/",
@@ -58,9 +67,14 @@ func TestURLHandler_CreateTextPlain(t *testing.T) {
 				return mock
 			},
 			want: want{
-				code:        500,
-				response:    "can't create url",
-				contentType: "text/plain",
+				code:                  500,
+				plainTextResponseBody: "can't create url",
+				jsonResponseBody: `
+				{
+					"error": "can't create url"
+				}
+				`,
+				contentType: nil,
 			},
 			shortenedURL: "",
 			sourceURL:    "lol",
@@ -74,9 +88,14 @@ func TestURLHandler_CreateTextPlain(t *testing.T) {
 				return mock
 			},
 			want: want{
-				code:        413,
-				response:    "request's body too big",
-				contentType: "text/plain",
+				code:                  413,
+				plainTextResponseBody: "request's body too big",
+				jsonResponseBody: `
+				{
+					"error": "request's body too big"
+				}
+				`,
+				contentType: nil,
 			},
 			shortenedURL: "long",
 			sourceURL: func() string {
@@ -88,6 +107,7 @@ func TestURLHandler_CreateTextPlain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// test for plain text handler
 			w := httptest.NewRecorder()
 
 			var body io.Reader
@@ -109,65 +129,52 @@ func TestURLHandler_CreateTextPlain(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.want.code, res.StatusCode)
-			require.Equal(t, tt.want.response, string(rBody))
-			require.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
-		})
-	}
-}
+			require.Equal(t, tt.want.plainTextResponseBody, string(rBody))
 
-func TestURLHandler_GetTextPlain(t *testing.T) {
-	type want struct {
-		code        int
-		response    string
-		contentType string
-		location    string
-	}
+			if tt.want.contentType != nil {
+				require.Equal(t, *tt.want.contentType, res.Header.Get("Content-Type"))
+			} else {
+				require.Equal(t, "text/plain", res.Header.Get("Content-Type"))
+			}
 
-	tests := []struct {
-		name    string
-		urlPath string
-		want    want
-		service func(test *testing.T) URLService
-	}{
-		{
-			name: "success get",
-			service: func(test *testing.T) URLService {
-				controller := gomock.NewController(test)
-				mock := mock_handler.NewMockURLService(controller)
-				mock.EXPECT().Get("random").Return("https://www.perplexity.ai/", nil).Times(1)
-				return mock
-			},
-			want: want{
-				code:        307,
-				response:    "",
-				contentType: "",
-				location:    "https://www.perplexity.ai/",
-			},
-			urlPath: "/random",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := chi.NewRouteContext()
-			ctx.URLParams.Add("shortenedURL", strings.TrimPrefix(tt.urlPath, "/"))
+			// test for json handler
+			w = httptest.NewRecorder()
 
-			r := httptest.NewRequest(http.MethodGet, tt.urlPath, nil)
-			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, ctx))
+			bodyBytes, _ := json.Marshal(map[string]string{"url": tt.sourceURL})
 
-			w := httptest.NewRecorder()
+			body = bytes.NewReader(bodyBytes)
 
-			h := NewURLHandler(tt.service(t))
-			h.GetTextPlain(w, r)
+			request = httptest.NewRequest(http.MethodPost, "/", body)
 
-			res := w.Result()
+			h = NewURLHandler(tt.service(t))
+			h.CreateJSON(w, request)
+
+			res = w.Result()
 			defer res.Body.Close()
 
-			rBody, err := io.ReadAll(res.Body)
+			rBody, err = io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			require.Equal(t, tt.want.code, res.StatusCode)
-			require.Equal(t, tt.want.response, string(rBody))
-			require.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
+
+			replaceFn := func(r rune) rune {
+				if r == '\t' || r == '\n' || r == ' ' {
+					return -1
+				} else {
+					return r
+				}
+			}
+
+			require.Equal(t,
+				strings.Map(replaceFn, tt.want.jsonResponseBody),
+				strings.Map(replaceFn, string(rBody)),
+			)
+
+			if tt.want.contentType != nil {
+				require.Equal(t, *tt.want.contentType, res.Header.Get("Content-Type"))
+			} else {
+				require.Equal(t, "application/json", res.Header.Get("Content-Type"))
+			}
 		})
 	}
 }

@@ -6,6 +6,7 @@ import (
 )
 
 func jsonErrResp(w http.ResponseWriter, statusCode int, errText string) {
+	w.WriteHeader(statusCode)
 	_, _ = w.Write([]byte(fmt.Sprintf(`
 	{
 		"error": "%s"

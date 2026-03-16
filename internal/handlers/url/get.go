@@ -25,7 +25,7 @@ func (h *URLHandler) GetTextPlain(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h *URLHandler) GetJson(w http.ResponseWriter, r *http.Request) {
+func (h *URLHandler) GetJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	dtoIn := GetRequest{}
 
@@ -38,7 +38,7 @@ func (h *URLHandler) GetJson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrShortenedURLDoesntExist):
-			jsonErrResp(w, http.StatusNotFound, "shortened url not foudn")
+			jsonErrResp(w, http.StatusNotFound, "shortened url not found")
 		case errors.Is(err, service.ErrCantGetURL):
 			jsonErrResp(w, http.StatusInternalServerError, "can't get url")
 		}

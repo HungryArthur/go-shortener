@@ -33,19 +33,30 @@ func (h *URLHandler) CreateTextPlain(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(shortenedURL))
 }
 
-func (h *URLHandler) CreateJson(w http.ResponseWriter, r *http.Request) {
+func (h *URLHandler) CreateJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	dtoIn := CreateRequest{}
 
 	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(&dtoIn); err != nil {
+
+	if err := json.NewDecoder(io.LimitReader(r.Body, 100)).Decode(&dtoIn); err != nil {
+		if n, _ := r.Body.Read(make([]byte, 1)); n == 1 {
+			jsonErrResp(w, http.StatusRequestEntityTooLarge, "request's body too big")
+			return
+		}
+
 		jsonErrResp(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+
+	if n, _ := r.Body.Read(make([]byte, 1)); n == 1 {
+		jsonErrResp(w, http.StatusRequestEntityTooLarge, "request's body too big")
 		return
 	}
 
 	shortenedURL, err := h.service.Save(dtoIn.SourceURL)
 	if err != nil {
-		jsonErrResp(w, http.StatusInternalServerError, "can't short url")
+		jsonErrResp(w, http.StatusInternalServerError, "can't create url")
 		return
 	}
 

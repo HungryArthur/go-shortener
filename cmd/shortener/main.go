@@ -24,10 +24,9 @@ func main() {
 		panic(err)
 	}
 	defer logger.Sync()
-	
+
 	sugar := logger.Sugar()
-	
-	config.Load()
+
 	sugar.Infow("config load", "run address", config.FlagRunAddr)
 
 	repo := repository.NewURLRepository()
@@ -35,7 +34,7 @@ func main() {
 	handler := url_handler.NewURLHandler(service)
 
 	router := chi.NewRouter()
-	
+
 	router.Use(middlewares.WriteHeader(logger))
 
 	router.Get("/{shortenedURL}", handler.GetTextPlain)
@@ -44,7 +43,7 @@ func main() {
 	router.Post("/api/shorten", handler.GetJson)
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
-	
+
 	sugar.Infow("starting server", "address", config.FlagRunAddr)
 
 	go func() {

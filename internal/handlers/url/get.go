@@ -33,7 +33,7 @@ func (h *URLHandler) GetJson(w http.ResponseWriter, r *http.Request) {
 		jsonErrResp(w, http.StatusBadRequest, "invalid json")
 		return
 	}
-	srcUrl, err := h.service.Get(dtoIn.ShortenedURL)
+	srcURL, err := h.service.Get(dtoIn.ShortenedURL)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrShortenedURLDoesntExist):
@@ -44,7 +44,7 @@ func (h *URLHandler) GetJson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dtoOut := GetResponse{
-		SourceURL: srcUrl,
+		SourceURL: srcURL,
 	}
 	err = json.NewEncoder(w).Encode(dtoOut)
 	if err != nil {

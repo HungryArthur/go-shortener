@@ -40,7 +40,7 @@ func main() {
 	router.Get("/{shortenedURL}", handler.GetTextPlain)
 	router.Post("/", handler.CreateTextPlain)
 
-	router.Post("/api/shorten", handler.GetJson)
+	router.Post("/api/shorten", handler.CreateJson)
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
 

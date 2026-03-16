@@ -28,6 +28,7 @@ func (h *URLHandler) GetTextPlain(w http.ResponseWriter, r *http.Request) {
 func (h *URLHandler) GetJson(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	dtoIn := GetRequest{}
+
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&dtoIn); err != nil {
 		jsonErrResp(w, http.StatusBadRequest, "invalid json")
@@ -52,4 +53,5 @@ func (h *URLHandler) GetJson(w http.ResponseWriter, r *http.Request) {
 		jsonErrResp(w, http.StatusInternalServerError, "can't get url")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }

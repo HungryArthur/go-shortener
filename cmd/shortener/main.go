@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,19 +10,33 @@ import (
 
 	"github.com/HungryArthur/go-shortener/internal/config"
 	url_handler "github.com/HungryArthur/go-shortener/internal/handlers/url"
+	"github.com/HungryArthur/go-shortener/internal/middlewares"
 	"github.com/HungryArthur/go-shortener/internal/repository"
 	"github.com/HungryArthur/go-shortener/internal/service"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 func main() {
 	config.Load()
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+	
+	sugar := logger.Sugar()
+	
+	config.Load()
+	sugar.Infow("config load", "run address", config.FlagRunAddr)
 
 	repo := repository.NewURLRepository()
 	service := service.NewURLService(repo)
 	handler := url_handler.NewURLHandler(service)
 
 	router := chi.NewRouter()
+	
+	router.Use(middlewares.WriteHeader(logger))
 
 	router.Get("/{shortenedURL}", handler.GetTextPlain)
 	router.Post("/", handler.CreateTextPlain)
@@ -31,11 +44,13 @@ func main() {
 	router.Post("/api/shorten", handler.GetJson)
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
+	
+	sugar.Infow("starting server", "address", config.FlagRunAddr)
 
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			fmt.Println("can't start server", err)
+			sugar.Errorw("can't start server", err)
 		}
 	}()
 	sigCh := make(chan os.Signal, 1)
@@ -45,11 +60,11 @@ func main() {
 	quitCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err := srv.Shutdown(quitCtx)
+	err = srv.Shutdown(quitCtx)
 	if err != nil {
-		fmt.Println("can't shutdown http server")
+		sugar.Error("can't shutdown http server")
 	} else {
-		fmt.Println("successfully shutdowned http server")
+		sugar.Info("successfully shutdowned http server")
 	}
 
 }

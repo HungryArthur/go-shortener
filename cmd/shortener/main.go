@@ -36,11 +36,12 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(middlewares.WriteHeader(logger))
+	router.Use(middlewares.GzipMiddleware)
 
 	router.Get("/{shortenedURL}", handler.GetTextPlain)
 	router.Post("/", handler.CreateTextPlain)
-
 	router.Post("/api/shorten", handler.CreateJSON)
+	
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
 

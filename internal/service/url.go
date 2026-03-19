@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/HungryArthur/go-shortener/internal/config"
-	"github.com/HungryArthur/go-shortener/internal/repository"
+	repository "github.com/HungryArthur/go-shortener/internal/repository/url"
 )
 
 const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

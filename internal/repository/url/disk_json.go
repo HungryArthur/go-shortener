@@ -34,17 +34,18 @@ func (r *URLDiskJsonRepository) Save(sourceURL, shortenedURL string) error {
 	defer r.mu.Unlock()
 
 	urlEntries := make([]urlEntry, 0)
-
 	fileData, err := os.ReadFile(r.jsonStoragePath)
-
 	if err != nil {
-		r.logger.Error("can't read file",
-			zap.String("path", r.jsonStoragePath),
-			zap.String("err", err.Error()),
-		)
-		return fmt.Errorf("%w: can't read file: %w", err, ErrCantSaveURL)
+		if os.IsNotExist(err) {
+			fileData = []byte("[]")
+		} else {
+			r.logger.Error("can't read file",
+				zap.String("path", r.jsonStoragePath),
+				zap.String("err", err.Error()),
+			)
+			return fmt.Errorf("%w: can't read file: %w", ErrCantSaveURL, err)
+		}
 	}
-
 	err = json.Unmarshal(fileData, &urlEntries)
 	if err != nil {
 		r.logger.Error("can't unmarshal file, resetting to blank storage",
@@ -92,11 +93,15 @@ func (r *URLDiskJsonRepository) Get(shortenedURL string) (string, error) {
 	fileData, err := os.ReadFile(r.jsonStoragePath)
 
 	if err != nil {
-		r.logger.Error("can't read file",
-			zap.String("path", r.jsonStoragePath),
-			zap.String("err", err.Error()),
-		)
-		return "", fmt.Errorf("%w: can't read file: %w", err, ErrCantGetSourceURL)
+		if os.IsNotExist(err) {
+			fileData = []byte("")
+		} else {
+			r.logger.Error("can't read file",
+				zap.String("path", r.jsonStoragePath),
+				zap.String("err", err.Error()),
+			)
+			return "", fmt.Errorf("%w: can't read file: %w", err, ErrCantGetSourceURL)
+		}
 	}
 
 	err = json.Unmarshal(fileData, &urlEntries)

@@ -9,15 +9,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type URLDiskJsonRepository struct {
+type URLDiskJSONRepository struct {
 	jsonStoragePath string
 	mu              sync.Mutex
 
 	logger *zap.Logger
 }
 
-func NewURLDiskJsonRepository(logger *zap.Logger, jsonStoragePath string) *URLDiskJsonRepository {
-	return &URLDiskJsonRepository{
+func NewURLDiskJSONRepository(logger *zap.Logger, jsonStoragePath string) *URLDiskJSONRepository {
+	return &URLDiskJSONRepository{
 		jsonStoragePath: jsonStoragePath,
 		mu:              sync.Mutex{},
 		logger:          logger.With(zap.String("service", "url-json-repo")),
@@ -29,7 +29,7 @@ type urlEntry struct {
 	SourceURL    string `json:"original_url"`
 }
 
-func (r *URLDiskJsonRepository) Save(sourceURL, shortenedURL string) error {
+func (r *URLDiskJSONRepository) Save(sourceURL, shortenedURL string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -85,7 +85,7 @@ func (r *URLDiskJsonRepository) Save(sourceURL, shortenedURL string) error {
 	return nil
 }
 
-func (r *URLDiskJsonRepository) Get(shortenedURL string) (string, error) {
+func (r *URLDiskJSONRepository) Get(shortenedURL string) (string, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	urlEntries := make([]urlEntry, 0)

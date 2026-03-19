@@ -29,11 +29,16 @@ func main() {
 
 	sugar.Infow("config load", "run address", config.FlagRunAddr)
 
-	// repo := repository.NewURLMemoryRepository()
-	repo := repository.NewURLDiskJsonRepository(
-		logger,
-		"data.json",
-	)
+	var repo service.URLRepository
+	if config.FileStoragePath == "" {
+		repo = repository.NewURLMemoryRepository()
+	} else {
+		repo = repository.NewURLDiskJSONRepository(
+			logger,
+			config.FileStoragePath,
+		)
+	}
+
 	service := service.NewURLService(repo)
 	handler := url_handler.NewURLHandler(service)
 

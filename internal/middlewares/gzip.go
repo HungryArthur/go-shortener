@@ -37,13 +37,13 @@ func GzipMiddleware(h http.Handler) http.Handler {
 				return
 			}
 			defer gz.Close()
-			
+
 			w = gzipWriter{
 				ResponseWriter: w,
-				Writer: gz,
+				Writer:         gz,
 			}
 			w.Header().Set("Content-Encoding", "gzip")
 		}
-	h.ServeHTTP(w, r)
+		h.ServeHTTP(w, r)
 	})
 }

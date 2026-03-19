@@ -11,7 +11,7 @@ import (
 	"github.com/HungryArthur/go-shortener/internal/config"
 	url_handler "github.com/HungryArthur/go-shortener/internal/handlers/url"
 	"github.com/HungryArthur/go-shortener/internal/middlewares"
-	"github.com/HungryArthur/go-shortener/internal/repository"
+	repository "github.com/HungryArthur/go-shortener/internal/repository/url"
 	"github.com/HungryArthur/go-shortener/internal/service"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -29,7 +29,16 @@ func main() {
 
 	sugar.Infow("config load", "run address", config.FlagRunAddr)
 
-	repo := repository.NewURLRepository()
+	var repo service.URLRepository
+	if config.FileStoragePath == "" {
+		repo = repository.NewURLMemoryRepository()
+	} else {
+		repo = repository.NewURLDiskJSONRepository(
+			logger,
+			config.FileStoragePath,
+		)
+	}
+
 	service := service.NewURLService(repo)
 	handler := url_handler.NewURLHandler(service)
 
@@ -41,7 +50,6 @@ func main() {
 	router.Get("/{shortenedURL}", handler.GetTextPlain)
 	router.Post("/", handler.CreateTextPlain)
 	router.Post("/api/shorten", handler.CreateJSON)
-	
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
 

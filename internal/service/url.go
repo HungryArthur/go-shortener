@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/HungryArthur/go-shortener/internal/config"
-	"github.com/HungryArthur/go-shortener/internal/repository"
+	repository "github.com/HungryArthur/go-shortener/internal/repository/url"
 )
 
 const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -44,11 +44,15 @@ func (s *URLService) Save(sourceURL string) (string, error) {
 
 	err := s.repo.Save(sourceURL, shortCode)
 	if err != nil {
-		if errors.Is(err, repository.ErrShortenedURLAlreadyExists) {
-			fmt.Println("recursive")
+		switch {
+
+		case errors.Is(err, repository.ErrShortenedURLAlreadyExists):
 			return s.Save(sourceURL)
+		case errors.Is(err, repository.ErrCantSaveURL):
+			return "", fmt.Errorf("can't save url to storage: %w %w", err, ErrCantSaveURL)
+		default:
+			return "", fmt.Errorf("unhandled error, when saving url to storage: %w", err)
 		}
-		return "", fmt.Errorf("can't save new url to storage: %w", err)
 	}
 
 	baseURL := config.FlagBaseShortenedURLAddr
@@ -66,6 +70,8 @@ func (s *URLService) Get(shortenedURL string) (string, error) {
 		switch {
 		case errors.Is(err, repository.ErrShortenedURLDoesntExist):
 			return "", ErrShortenedURLDoesntExist
+		case errors.Is(err, repository.ErrCantGetSourceURL):
+			return "", fmt.Errorf("%w:%w", ErrCantGetURL, err)
 		default:
 			return "", fmt.Errorf("unhandled error from repository: %w, %w", err, ErrCantGetURL)
 		}

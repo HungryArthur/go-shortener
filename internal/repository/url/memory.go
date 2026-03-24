@@ -27,3 +27,8 @@ func (r *URLMemoryRepository) Get(shortenedURL string) (string, error) {
 	}
 	return srcURL, nil
 }
+
+
+func (r *URLMemoryRepository) Ping() error {
+	return nil
+}

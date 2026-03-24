@@ -6,17 +6,18 @@ import (
 	"strings"
 )
 
-var FlagRunAddr string
-
-var FlagBaseShortenedURLAddr string
-
-var FileStoragePath string
+var (
+	FlagRunAddr string
+	FlagBaseShortenedURLAddr string
+	FileStoragePath string
+	FileDatabaseDSN string
+)
 
 func Load() {
 	flag.StringVar(&FlagRunAddr, "a", ":8080", "address and port to run server")
-	flag.StringVar(&FlagBaseShortenedURLAddr, "b", "", "base address of the resulting shortened URL")
-
+	flag.StringVar(&FlagBaseShortenedURLAddr, "b", "", "base address of the resulting shortened URL")	
 	flag.StringVar(&FileStoragePath, "f", "", "json file for storing url data")
+	flag.StringVar(&FileDatabaseDSN, "d", "", "database DSN (postgres://...)")
 
 	flagRunAddr := os.Getenv("SERVER_ADDRESS")
 	if flagRunAddr != "" {
@@ -33,6 +34,11 @@ func Load() {
 	fileStoragePathEnv := os.Getenv("FILE_STORAGE_PATH")
 	if fileStoragePathEnv != "" {
 		FileStoragePath = fileStoragePathEnv
+	}
+	
+	fileDatabaseDSNEnv := os.Getenv("DATABASE_DSN")
+	if fileDatabaseDSNEnv != "" {
+		FileDatabaseDSN = fileDatabaseDSNEnv
 	}
 
 	// FlagBaseShortenedURLAddr = strings.TrimPrefix(FlagBaseShortenedURLAddr, "http://localhost" + FlagRunAddr)

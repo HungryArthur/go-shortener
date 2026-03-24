@@ -23,6 +23,7 @@ func genRandomString(length int) string {
 type URLRepository interface {
 	Save(sourceURL string, shortenedURL string) error
 	Get(shortenedURL string) (string, error)
+	Ping() error
 }
 
 type URLService struct {
@@ -77,4 +78,8 @@ func (s *URLService) Get(shortenedURL string) (string, error) {
 		}
 	}
 	return sourceURL, nil
+}
+
+func (s *URLService) Ping() error {
+	return s.repo.Ping()
 }

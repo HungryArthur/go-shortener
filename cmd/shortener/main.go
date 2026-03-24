@@ -8,13 +8,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	_ "github.com/lib/pq"
+	"go.uber.org/zap"
+
 	"github.com/HungryArthur/go-shortener/internal/config"
+	"github.com/HungryArthur/go-shortener/internal/db"
+	"github.com/HungryArthur/go-shortener/internal/handlers/ping"
 	url_handler "github.com/HungryArthur/go-shortener/internal/handlers/url"
 	"github.com/HungryArthur/go-shortener/internal/middlewares"
 	repository "github.com/HungryArthur/go-shortener/internal/repository/url"
 	"github.com/HungryArthur/go-shortener/internal/service"
-	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -27,29 +31,48 @@ func main() {
 
 	sugar := logger.Sugar()
 
-	sugar.Infow("config load", "run address", config.FlagRunAddr)
+	sugar.Infow("config load", 
+			"run address", config.FlagRunAddr,
+			"run address", config.FileStoragePath,
+			"run address", maskDSN(config.FileDatabaseDSN),
+	)
 
 	var repo service.URLRepository
-	if config.FileStoragePath == "" {
-		repo = repository.NewURLMemoryRepository()
+	
+	if config.FileDatabaseDSN != "" {
+		sugar.Info("using PostgreSQL repository")
+		
+		// Подключаемся к БД
+		database, err := db.Connect(config.FileDatabaseDSN, logger)
+		if err != nil {
+			sugar.Fatalw("failed to connect to database", "error", err)
+		}
+		defer database.Close()
+		
+		repo = repository.NewURLPostgresRepository(database, logger)
+		
+	} else if config.FileStoragePath != "" {
+		sugar.Infow("using file storage", "path", config.FileStoragePath)
+		repo = repository.NewURLDiskJSONRepository(logger, config.FileStoragePath)
+		
 	} else {
-		repo = repository.NewURLDiskJSONRepository(
-			logger,
-			config.FileStoragePath,
-		)
+		sugar.Info("using in-memory storage")
+		repo = repository.NewURLMemoryRepository()
 	}
 
-	service := service.NewURLService(repo)
-	handler := url_handler.NewURLHandler(service)
+	urlService := service.NewURLService(repo)
+	urlHandler := url_handler.NewURLHandler(urlService)
+	pingHandler := ping.NewPingHandler(repo, logger)
 
 	router := chi.NewRouter()
 
 	router.Use(middlewares.WriteHeader(logger))
 	router.Use(middlewares.GzipMiddleware)
 
-	router.Get("/{shortenedURL}", handler.GetTextPlain)
-	router.Post("/", handler.CreateTextPlain)
-	router.Post("/api/shorten", handler.CreateJSON)
+	router.Get("/ping", pingHandler.Ping)
+	router.Get("/{shortenedURL}", urlHandler.GetTextPlain)
+	router.Post("/", urlHandler.CreateTextPlain)
+	router.Post("/api/shorten", urlHandler.CreateJSON)
 
 	srv := http.Server{Addr: config.FlagRunAddr, Handler: router}
 
@@ -75,4 +98,11 @@ func main() {
 		sugar.Info("successfully shutdowned http server")
 	}
 
+}
+
+func maskDSN(dsn string) string {
+	if dsn == "" {
+		return ""
+	}
+	return "postgres://****:****@****/****"
 }

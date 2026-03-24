@@ -125,3 +125,7 @@ func (r *URLDiskJSONRepository) Get(shortenedURL string) (string, error) {
 	}
 	return "", ErrShortenedURLDoesntExist
 }
+
+func (r *URLDiskJSONRepository) Ping() error {
+	return nil
+}

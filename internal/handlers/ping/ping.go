@@ -14,7 +14,7 @@ type PingHandler struct {
 
 func NewPingHandler(repo service.URLRepository, logger *zap.Logger) *PingHandler {
 	return &PingHandler{
-		repo: repo,
+		repo:   repo,
 		logger: logger.With(zap.String("handler", "ping")),
 	}
 }

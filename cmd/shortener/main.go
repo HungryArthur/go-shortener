@@ -31,30 +31,30 @@ func main() {
 
 	sugar := logger.Sugar()
 
-	sugar.Infow("config load", 
-			"run address", config.FlagRunAddr,
-			"run address", config.FileStoragePath,
-			"run address", maskDSN(config.FileDatabaseDSN),
+	sugar.Infow("config load",
+		"run address", config.FlagRunAddr,
+		"run address", config.FileStoragePath,
+		"run address", maskDSN(config.FileDatabaseDSN),
 	)
 
 	var repo service.URLRepository
-	
+
 	if config.FileDatabaseDSN != "" {
 		sugar.Info("using PostgreSQL repository")
-		
+
 		// Подключаемся к БД
 		database, err := db.Connect(config.FileDatabaseDSN, logger)
 		if err != nil {
 			sugar.Fatalw("failed to connect to database", "error", err)
 		}
 		defer database.Close()
-		
+
 		repo = repository.NewURLPostgresRepository(database, logger)
-		
 	} else if config.FileStoragePath != "" {
+
 		sugar.Infow("using file storage", "path", config.FileStoragePath)
 		repo = repository.NewURLDiskJSONRepository(logger, config.FileStoragePath)
-		
+
 	} else {
 		sugar.Info("using in-memory storage")
 		repo = repository.NewURLMemoryRepository()

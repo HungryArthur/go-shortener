@@ -8,4 +8,3 @@ var (
 	ErrCantSaveURL              = errors.New("can't save url")
 	ErrDatabaseConnectionFailed = errors.New("database connection failed")
 )
-

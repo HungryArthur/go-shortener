@@ -8,7 +8,7 @@ import (
 )
 
 type URLPostgresRepository struct {
-	db *sql.DB
+	db     *sql.DB
 	logger *zap.Logger
 }
 
@@ -45,7 +45,7 @@ func (r *URLPostgresRepository) Get(shortenedURL string) (string, error) {
 		WHERE short_code = $1 
 		RETURNING original_url
 	`, shortenedURL).Scan(&sourceURL)
-	
+
 	if err == sql.ErrNoRows {
 		return "", ErrShortenedURLDoesntExist
 	}
